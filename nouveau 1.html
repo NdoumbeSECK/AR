@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>GAIA_β – Terminal Climat (Desktop)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root{
+      --bg:#050914;
+      --bg2:#050b18;
+      --panel:#0d1627;
+      --panel2:#111a2b;
+      --accent:#7df5b0;
+      --accent-soft:#214c3b;
+      --danger:#ff6b6b;
+      --muted:#9aa4ba;
+      --text:#edf3ff;
+      --mono:'SF Mono','JetBrains Mono','Consolas','Monaco',monospace;
+      --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    }
+    *{box-sizing:border-box;}
+    html,body{
+      margin:0;
+      padding:0;
+      height:100%;
+      background:radial-gradient(circle at top,#0d1630 0,#050914 55%);
+      color:var(--text);
+      font-family:var(--sans);
+    }
+    body{
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      padding:24px;
+    }
+    .app{
+      max-width:1200px;
+      width:100%;
+      display:grid;
+      grid-template-columns: minmax(0,2.1fr) minmax(320px,1fr);
+      gap:24px;
+    }
+    @media (max-width:900px){
+      body{padding:12px;}
+      .app{grid-template-columns:1fr;}
+    }
+    .card{
+      background:linear-gradient(145deg,rgba(255,255,255,0.02),rgba(0,0,0,0.6));
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,0.06);
+      box-shadow:0 18px 45px rgba(0,0,0,0.7);
+      position:relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:radial-gradient(circle at top left,rgba(125,245,176,0.08),transparent 55%);
+      opacity:1;
+      pointer-events:none;
+    }
+    .card-inner{
+      position:relative;
+      padding:20px 20px 16px 20px;
+    }
+    .header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:12px;
+      gap:12px;
+    }
+    .title-block{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      background:conic-gradient(from 210deg,#10b981,#0369a1,#1d4ed8,#10b981);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#e5f8ff;
+      font-weight:800;
+      font-size:16px;
+      box-shadow:0 0 25px rgba(16,185,129,0.6);
+    }
+    .title-main{
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+    }
+    .title-sub{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .terminal{
+      margin-top:6px;
+      border-radius:14px;
+      background:radial-gradient(circle at top,rgba(148,163,255,0.08),rgba(15,23,42,1));
+      border:1px solid rgba(148,163,255,0.15);
+      padding:14px 14px 90px 14px;
+      font-family:var(--mono);
+      font-size:13px;
+      line-height:1.5;
+      min-height:340px;
+      max-height:560px;
+      overflow:auto;
+      position:relative;
+    }
+    .term-line{
+      white-space:pre-wrap;
+      margin:2px 0;
+    }
+    .term-line.system{color:#7dd3fc;}
+    .term-line.gaia{color:#a5b4fc;}
+    .term-line.user{color:#bbf7d0;}
+    .term-line.warn{color:#fde68a;}
+    .term-line.error{color:#fecaca;}
+    .prompt{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:0;
+      padding:10px 12px;
+      border-top:1px solid rgba(148,163,255,0.18);
+      background:linear-gradient(to top,rgba(15,23,42,0.97),rgba(15,23,42,0.8));
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .prompt-label{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .prompt-input{
+      flex:1;
+      background:#020617;
+      border-radius:999px;
+      border:1px solid rgba(148,163,255,0.45);
+      padding:8px 12px;
+      color:var(--text);
+      font-family:var(--mono);
+      font-size:13px;
+      outline:none;
+    }
+    .prompt-input:focus{
+      box-shadow:0 0 0 1px rgba(125,245,176,0.65),0 0 22px rgba(56,189,248,0.5);
+    }
+    .btn{
+      border-radius:999px;
+      border:none;
+      padding:8px 14px;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+      background:linear-gradient(135deg,#22c55e,#14b8a6);
+      color:#022c22;
+      box-shadow:0 8px 20px rgba(34,197,94,0.4);
+      white-space:nowrap;
+    }
+    .btn:active{transform:translateY(1px); box-shadow:0 3px 12px rgba(34,197,94,0.4);}
+    .btn-secondary{
+      background:transparent;
+      color:var(--muted);
+      border:1px solid rgba(148,163,255,0.35);
+      box-shadow:none;
+    }
+    .btn-secondary:hover{border-color:var(--accent); color:var(--accent);}
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .side-card{
+      background:radial-gradient(circle at top right,rgba(56,189,248,0.14),rgba(15,23,42,1));
+      border-radius:18px;
+      border:1px solid rgba(148,163,255,0.25);
+      padding:14px 16px 16px 16px;
+      position:relative;
+      overflow:hidden;
+    }
+    .side-title{
+      font-size:15px;
+      font-weight:700;
+      margin-bottom:4px;
+    }
+    .side-sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .rule-list{
+      list-style:none;
+      padding-left:0;
+      margin:8px 0 0 0;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .rule-list li{
+      margin-bottom:4px;
+      display:flex;
+      gap:6px;
+    }
+    .rule-bullet{
+      width:14px;
+      margin-top:3px;
+      text-align:center;
+      font-size:11px;
+      color:var(--accent);
+    }
+    .score-value{
+      font-size:28px;
+      font-weight:800;
+      color:var(--accent);
+    }
+    .score-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:0.15em;
+      color:var(--muted);
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 9px;
+      border-radius:999px;
+      background:rgba(15,118,110,0.3);
+      border:1px solid rgba(45,212,191,0.7);
+      font-size:11px;
+      color:#ccfbf1;
+      margin-top:6px;
+    }
+    .pill span.icon{
+      font-size:13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="card-inner">
+        <div class="header">
+          <div class="title-block">
+            <div class="logo">GA</div>
+            <div>
+              <div class="title-main">GAIA_β – Terminal Climat</div>
+              <div class="title-sub">Simulation d’alerte climatique locale • Mode ordinateur</div>
+            </div>
+          </div>
+          <button class="btn-secondary" id="btn-reset" type="button">Réinitialiser</button>
+        </div>
+        <div class="terminal" id="terminal" aria-live="polite"></div>
+        <div class="prompt">
+          <div class="prompt-label">>_</div>
+          <input id="cmd" class="prompt-input" placeholder="Tape ta réponse ici…" autocomplete="off">
+          <button id="btn-send" class="btn" type="button">Envoyer</button>
+        </div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="side-card">
+        <div class="side-title">Règles de la mission</div>
+        <div class="side-sub">Réponds aux énigmes de GAIA_β sur trois thèmes : <b>Énergie</b>, <b>Océan</b>, <b>Humain</b>.</div>
+        <ul class="rule-list">
+          <li><span class="rule-bullet">1.</span><span>Lis attentivement chaque question dans le terminal.</span></li>
+          <li><span class="rule-bullet">2.</span><span>Réponds en tapant ta réponse puis en cliquant sur <b>Envoyer</b>.</span></li>
+          <li><span class="rule-bullet">3.</span><span>Le score augmente quand tes réponses aident GAIA à stabiliser la timeline.</span></li>
+        </ul>
+        <div class="pill"><span class="icon">⚠</span><span>Pas de retour en arrière : chaque réponse compte.</span></div>
+      </div>
+      <div class="side-card">
+        <div class="side-title">Score & progression</div>
+        <div class="side-sub">Plus ton score est élevé, plus ta timeline est stable.</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+          <div>
+            <div class="score-value" id="score-number">0</div>
+            <div class="score-label">Score GAIA_β</div>
+          </div>
+          <div style="text-align:right;font-size:12px;color:var(--muted);" id="phase-label">
+            Phase : Introduction<br>Thème courant : —
+          </div>
+        </div>
+      </div>
+      <div class="side-card">
+        <div class="side-title">Récompense physique</div>
+        <div class="side-sub">
+          <b>Finalité du jeu :</b> la <b>première personne</b> qui termine la simulation avec un score élevé
+          (et montre son écran à l’animateur / prof) remporte une <b>gourde en inox</b> ♻
+        </div>
+        <ul class="rule-list">
+          <li><span class="rule-bullet">🎯</span><span>Finis le jeu le plus vite possible, avec le meilleur score.</span></li>
+          <li><span class="rule-bullet">🖥</span><span>Garde la page des résultats affichée pour prouver ta victoire.</span></li>
+          <li><span class="rule-bullet">🥇</span><span>Le / la gagnant·e repart avec la gourde réutilisable.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const term = document.getElementById('terminal');
+  const input = document.getElementById('cmd');
+  const btnSend = document.getElementById('btn-send');
+  const btnReset = document.getElementById('btn-reset');
+  const scoreEl = document.getElementById('score-number');
+  const phaseLabel = document.getElementById('phase-label');
+
+  let step = 0;
+  let score = 0;
+  let fragments = [];
+  let started = false;
+  let humanIndex = 0;
+
+  const riddlesHuman = [
+    {
+      q: "“Plus tu me fais longtemps, plus la Terre transpire.\nLes gens m’utilisent surtout par confort ou habitude.\nJ’ai trois températures : chaud, tiède, très chaud. Une seule est raisonnable.\nRéponse ?”",
+      valid: ['douche','douches','eau chaude','douche chaude','prendre une douche']
+    },
+    {
+      q: "“Je n’ai pas de bouche mais je te parle.\nJe n’ai pas de bras mais je travaille.\nPlus tu me regardes, plus des milliers d’autres travaillent dans l’ombre.\nRéponse ?”",
+      valid: ['scroll','scrolling','streaming','tiktok','youtube','reels','autoplay','netflix','instagram']
+    }
+  ];
+
+  function setPhaseLabel(phase, theme){
+    phaseLabel.innerHTML = "Phase : " + phase + "<br>Thème courant : " + theme;
+  }
+
+  function appendLine(text, type){
+    const div = document.createElement('div');
+    div.className = 'term-line' + (type ? ' ' + type : '');
+    div.textContent = text;
+    term.appendChild(div);
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function clearInput(){
+    input.value = '';
+    input.focus();
+  }
+
+  function updateScore(delta){
+    score += delta;
+    if(score < 0) score = 0;
+    scoreEl.textContent = String(score);
+  }
+
+  function intro(){
+    appendLine('=== GAIA_β // Protocole local — Terminal Climat ===','system');
+    appendLine('', 'system');
+    appendLine('Connexion en cours...', 'system');
+    appendLine('IA (GAIA_β) : Je tente de vous joindre depuis une timeline proche de la vôtre.','gaia');
+    appendLine('IA (GAIA_β) : Votre campus approche d’un point de bascule climatique.','gaia');
+    appendLine('IA (GAIA_β) : Trois leviers peuvent stabiliser la situation : ÉNERGIE, OCÉAN, HUMAIN.','gaia');
+    appendLine('', 'system');
+    appendLine("Tape n'importe quoi puis appuie sur 'Envoyer' pour lancer la phase 1.", 'system');
+  }
+
+  function showEnergyQ1(){
+    setPhaseLabel('1 – Énergie','Énergie');
+    appendLine('', 'system');
+    appendLine('PHASE 1 // ÉNERGIE','system');
+    appendLine("Q1. Quelle est la concentration actuelle approximative de CO₂ dans l'atmosphère (ppm) ?", 'gaia');
+    appendLine('  A) 420','gaia');
+    appendLine('  B) 435','gaia');
+    appendLine('  C) 360','gaia');
+    appendLine('  D) 445','gaia');
+    appendLine('Réponds avec A, B, C ou D.', 'system');
+  }
+
+  function handleEnergyQ1(ans){
+    const a = ans.trim().toUpperCase();
+    if(!['A','B','C','D'].includes(a)){
+      appendLine('Réponse non valide. Choisis A, B, C ou D.','error');
+      return false;
+    }
+    if(a === 'A'){
+      appendLine('>> Correct : ≈ 420 ppm. +2 points','user');
+      updateScore(2);
+      fragments.push('Calibration atmosphérique validée.');
+    }else if(a === 'B' || a === 'D'){
+      appendLine('>> Proche, mais un peu trop élevé. +1 point','user');
+      updateScore(1);
+      fragments.push('Calibration atmosphérique approximative.');
+    }else{
+      appendLine(">> Incorrect, la valeur actuelle est plus élevée que 360 ppm. 0 point",'user');
+    }
+    appendLine('', 'system');
+    showEnergyQ2();
+    step = 2;
+    return true;
+  }
+
+  function showEnergyQ2(){
+    appendLine('Q2. Choisis 2 actions qui réduisent/absorbent réellement le CO₂ (écris les lettres, ex: AD) :','gaia');
+    appendLine('  A) Passer à la voiture électrique','gaia');
+    appendLine('  B) Adopter une alimentation végétarienne plus souvent','gaia');
+    appendLine('  C) Juste prier pour que ça s’arrange','gaia');
+    appendLine('  D) Planter et protéger des arbres','gaia');
+    appendLine('Réponds par 2 lettres (exemple : BD).','system');
+  }
+
+  function handleEnergyQ2(ans){
+    const cleaned = ans.toUpperCase().replace(/\s+/g,'');
+    if(cleaned.length < 2){
+      appendLine('Donne au moins 2 lettres (ex : BD).','error');
+      return false;
+    }
+    const set = new Set(cleaned.split(''));
+    const goodCombos = [
+      new Set(['A','B']),
+      new Set(['A','D']),
+      new Set(['B','D'])
+    ];
+    let ok = false;
+    for(const g of goodCombos){
+      let has = true;
+      for(const x of g){
+        if(!set.has(x)){ has = false; break; }
+      }
+      if(has){ ok = true; break; }
+    }
+    if(ok){
+      appendLine('>> Tes choix vont vraiment dans le bon sens. +2 points','user');
+      updateScore(2);
+      fragments.push('Levier énergétique identifié.');
+    }else{
+      appendLine('>> Impact limité ou symbolique. 0 point','user');
+    }
+    appendLine('', 'system');
+    showOceanQ();
+    step = 3;
+    return true;
+  }
+
+  function showOceanQ(){
+    setPhaseLabel('2 – Océan','Océan');
+    appendLine('PHASE 2 // OCÉAN','system');
+    appendLine('IA (GAIA_β) : Je détecte une agitation au niveau des masses d’eau autour de vous.','gaia');
+    appendLine('Trois indices linguistiques mènent à un océan :','gaia');
+    appendLine('  1) Je borde l’Europe et l’Afrique.','gaia');
+    appendLine('  2) Je parle aux marées de la Manche et du Golfe de Gascogne.','gaia');
+    appendLine("  3) Mon nom se termine par 'TIQUE'.",'gaia');
+    appendLine('Quel est cet océan ? (écris le nom)','system');
+  }
+
+  function handleOceanMain(ans){
+    const a = ans.trim().toLowerCase();
+    const valid = ['atlantique','océan atlantique','ocean atlantique'];
+    if(valid.includes(a)){
+      appendLine(">> Correct : l’océan Atlantique. +2 points",'user');
+      updateScore(2);
+      fragments.push('Signal océanique localisé : Atlantique.');
+    }else{
+      appendLine(">> Inexact. C’était l’océan Atlantique.",'error');
+    }
+    appendLine('', 'system');
+    showOceanBonus();
+    step = 4;
+    return true;
+  }
+
+  function showOceanBonus(){
+    appendLine('Bonus OCÉAN : Mot de passe en 4 lettres :','gaia');
+    appendLine('“Marées + cartes marines + boussole = ?”','gaia');
+    appendLine('(Indice : univers marin / couleur uniforme des marins)','gaia');
+    appendLine('Réponds avec un mot court (ex : NAVY).','system');
+  }
+
+  function handleOceanBonus(ans){
+    const a = ans.trim().toLowerCase();
+    if(a === 'navy' || a === 'mer'){
+      appendLine('>> Bonus validé. Tu sais naviguer dans la tempête. +1 point','user');
+      updateScore(1);
+      fragments.push('Navigation océanique acquise.');
+    }else{
+      appendLine('>> Bonus manqué. Ce n’est pas grave, la mission continue.','warn');
+    }
+    appendLine('', 'system');
+    showHumanRiddle();
+    step = 5;
+    return true;
+  }
+
+  function showHumanRiddle(){
+    setPhaseLabel('3 – Humain','Humain');
+    if(humanIndex === 0){
+      appendLine('PHASE 3 // HUMAIN','system');
+      appendLine('IA (GAIA_β) : Dernier levier : le comportement humain. Résous ces devinettes.','gaia');
+    }
+    const r = riddlesHuman[humanIndex];
+    appendLine('', 'system');
+    appendLine(r.q,'gaia');
+    appendLine('Tape ta réponse en un mot ou une courte expression.','system');
+  }
+
+  function handleHumanRiddle(ans){
+    const r = riddlesHuman[humanIndex];
+    const a = ans.trim().toLowerCase();
+    if(!a){
+      appendLine('Donne une réponse, même approximative.','error');
+      return false;
+    }
+    const ok = r.valid.some(v => a === v || a.includes(v));
+    if(ok){
+      appendLine('>> Bien vu. Tu as identifié un vrai levier humain. +2 points','user');
+      updateScore(2);
+      fragments.push('Comportement humain décodé.');
+    }else{
+      appendLine('>> Pas tout à fait, mais la prise de conscience progresse. 0 point','warn');
+    }
+    humanIndex++;
+    if(humanIndex < riddlesHuman.length){
+      showHumanRiddle();
+      step = 6;
+    }else{
+      appendLine('', 'system');
+      appendLine("IA (GAIA_β) : Analyse terminée. Tape n’importe quoi puis appuie sur 'Envoyer' pour voir ton résultat final.",'gaia');
+      step = 7;
+    }
+    return true;
+  }
+
+  function showFinale(){
+    setPhaseLabel('Finale','—');
+    appendLine('', 'system');
+    appendLine('=== RECONSTRUCTION DU MESSAGE GAIA_β ===','system');
+    const msg = fragments.length ? fragments.join(' ') : "Signal faible… pas assez de données.";
+    appendLine('', 'gaia');
+    appendLine('Message reconstruit :','gaia');
+    appendLine(msg,'gaia');
+    appendLine('', 'system');
+    appendLine('Score total : ' + score,'system');
+    let niveau;
+    if(score >= 7){
+      niveau = 'Niveau : Éco-Guerrier·e — timeline localement stabilisée.';
+    }else if(score >= 4){
+      niveau = 'Niveau : Cellule en éveil — marge de progression.';
+    }else{
+      niveau = 'Niveau : Signal faible — instabilités persistantes.';
+    }
+    appendLine(niveau,'system');
+    appendLine('', 'system');
+    appendLine('Mission réelle (débloquée) :','gaia');
+    appendLine('• Lancer une collecte de vêtements synthétiques (2 kg minimum au total).','gaia');
+    appendLine('• Sensibiliser 1 personne à un “geste climat” qui n’est PAS juste symbolique.','gaia');
+    appendLine('', 'system');
+    appendLine('🎁 RÉCOMPENSE :','gaia');
+    appendLine('La première personne qui montre cet écran final à l’animateur ou au/à la prof,','gaia');
+    appendLine('avec un bon score et toutes les phases complétées, gagne une gourde en inox.','gaia');
+    appendLine('', 'system');
+    appendLine("Tu peux cliquer sur 'Réinitialiser' en haut à droite pour rejouer.",'system');
+  }
+
+  function handleSubmit(){
+    const value = input.value;
+    if(!started){
+      started = true;
+      appendLine('> ' + value,'user');
+      appendLine('','system');
+      showEnergyQ1();
+      step = 1;
+      clearInput();
+      return;
+    }
+    if(step === 1){
+      appendLine('> ' + value,'user');
+      if(handleEnergyQ1(value)) clearInput();
+      return;
+    }
+    if(step === 2){
+      appendLine('> ' + value,'user');
+      if(handleEnergyQ2(value)) clearInput();
+      return;
+    }
+    if(step === 3){
+      appendLine('> ' + value,'user');
+      if(handleOceanMain(value)) clearInput();
+      return;
+    }
+    if(step === 4){
+      appendLine('> ' + value,'user');
+      if(handleOceanBonus(value)) clearInput();
+      return;
+    }
+    if(step === 5 || step === 6){
+      appendLine('> ' + value,'user');
+      if(handleHumanRiddle(value)) clearInput();
+      return;
+    }
+    if(step === 7){
+      appendLine('> ' + value,'user');
+      showFinale();
+      clearInput();
+      step = 8;
+      return;
+    }
+    if(step >= 8){
+      appendLine('Session terminée. Utilise "Réinitialiser" pour recommencer.','warn');
+    }
+  }
+
+  function reset(){
+    term.innerHTML = '';
+    score = 0;
+    scoreEl.textContent = '0';
+    fragments = [];
+    humanIndex = 0;
+    step = 0;
+    started = false;
+    setPhaseLabel('Introduction','—');
+    intro();
+    clearInput();
+  }
+
+  btnSend.addEventListener('click', handleSubmit);
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      handleSubmit();
+    }
+  });
+  btnReset.addEventListener('click', reset);
+
+  intro();
+  input.focus();
+})();  
+</script>
+</body>
+</html>
