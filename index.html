@@ -406,13 +406,13 @@
     appendLine('  B) Adopter une alimentation végétarienne plus souvent','gaia');
     appendLine('  C) Juste prier pour que ça s’arrange','gaia');
     appendLine('  D) Planter et protéger des arbres','gaia');
-    appendLine('Réponds par 2 lettres (exemple : BD).','system');
+    appendLine('Réponds par 2 lettres ','system');
   }
 
   function handleEnergyQ2(ans){
     const cleaned = ans.toUpperCase().replace(/\s+/g,'');
     if(cleaned.length < 2){
-      appendLine('Donne au moins 2 lettres (ex : BD).','error');
+      appendLine('Donne au moins 2 lettres ','error');
       return false;
     }
     const set = new Set(cleaned.split(''));
@@ -473,7 +473,7 @@
     appendLine('Bonus OCÉAN : Mot de passe en 4 lettres :','gaia');
     appendLine('“Marées + cartes marines + boussole = ?”','gaia');
     appendLine('(Indice : univers marin / couleur uniforme des marins)','gaia');
-    appendLine('Réponds avec un mot court (ex : NAVY).','system');
+    appendLine('Réponds avec un mot court .','system');
   }
 
   function handleOceanBonus(ans){
